@@ -41,6 +41,10 @@ class LinearModel:
         a float, but raises a Value error if a boolean, list or numpy array is passed in
         hint: consider np.exp()
         """
+        if not isinstance(x, np.float):
+            raise ValueError('Activation requires a float') 
+        return (1 / (1 + np.exp(-x)))
+
 
     def forward(self, inputs):
         """
@@ -49,6 +53,8 @@ class LinearModel:
         inputs is a numpy array. The bias term is the last element in self.weights.
         hint: call the activation function you have implemented above.
         """
+        inputs = np.append(inputs, 1) # account for bias
+        return self.activation(np.dot(inputs, self.weights))
 
     @staticmethod
     def loss(prediction, label):
@@ -56,6 +62,8 @@ class LinearModel:
         TODO: Return the cross entropy for the given prediction and label
         hint: consider using np.log()
         """
+        y, p = label, prediction
+        return -(y * np.log(p) + (1 - y) * np.log(1 - p))
 
     @staticmethod
     def error(prediction, label):
@@ -65,6 +73,7 @@ class LinearModel:
         For example, if label= 1 and the prediction was 0.8, return 0.2
                      if label= 0 and the preduction was 0.43 return -0.43
         """
+        return label - prediction
 
     def backward(self, inputs, diff):
         """
@@ -72,7 +81,7 @@ class LinearModel:
 
         We take advantage of the simplification shown in Lecture 2b, slide 23,
         to compute the gradient directly from the differential or difference
-        dE/ds = z - t (which is passed in as diff)
+        dE/ds = t - z (which is passed in as diff)
 
         The resulting weight update should look essentially the same as for the
         Perceptron Learning Rule (shown in Lectures 1c, slide 11) except that
@@ -81,6 +90,9 @@ class LinearModel:
 
         Note: Numpy arrays are passed by reference and can be modified in-place
         """
+        inputs = np.append(inputs, 1) # account for bias
+        gradients = np.dot(inputs.T, diff)
+        self.weights += self.lr * gradients
 
     def plot(self, inputs, marker):
         """
@@ -105,10 +117,11 @@ class LinearModel:
 
 def main():
     inputs, labels = pkl.load(open("../data/binary_classification_data.pkl", "rb"))
+    # inputs = np.c_[inputs, np.ones(inputs.shape[0])]
 
     epochs = 400
     model = LinearModel(num_inputs=inputs.shape[1], learning_rate=0.01)
-
+    cost = 0
     for i in range(epochs):
         num_correct = 0
         for x, y in zip(inputs, labels):
@@ -116,7 +129,7 @@ def main():
             output = model.forward(x)
 
             # Calculate loss
-            cost = model.loss(output, y)
+            cost += model.loss(output, y)
 
             # Calculate difference or differential
             diff = model.error(output, y)
@@ -128,7 +141,7 @@ def main():
             preds = output > 0.5  # 0.5 is midline of sigmoid
             num_correct += int(preds == y)
 
-        print(f" Cost: {cost:8.6f} Accuracy: {num_correct / len(inputs) * 100}%")
+        print(f" Cost: {cost/len(inputs):.2f} Accuracy: {num_correct / len(inputs) * 100:.2f}%")
         model.plot(inputs, "C2--")
     model.plot(inputs, "k")
     plt.show()
