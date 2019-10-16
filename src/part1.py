@@ -93,13 +93,3 @@ def simple_stack(tensors, dim):
         along a new dimension(dim) and returns the result.
     """
     return torch.stack(tensors, dim)
-
-# # TODO: remove
-# if __name__ == '__main__':
-#     x = torch.rand(2, 3)
-#     y = torch.rand(2, 3)
-#     z = simple_addition(x,y)
-#     print(x, '\n', y, '\n', z)
-#     print(simple_reshape(x, [3,2]))
-#     print(simple_flat(x))
-#     print(simple_transpose(x))
