@@ -104,10 +104,23 @@ class NNModel:
 
            2) An int 8x8 numpy array of labels corresponding to this tiling
         """
-        images, labels = next(iter(self.trainloader))  
-        resized_images = np.array(images)
+        images, labels = next(iter(self.trainloader))
+
+        """
+      y | 
+        |
+        |______ x
+        """
+        y = []
+        x = []
+        for i, image in enumerate(images):
+            x.append(np.array(image).T)
+            if ((i+1) % 8) == 0:
+                r = np.array(x).reshape(28*8, 28)
+                y.append(r.T)
+                x = []
+        resized_images = np.array(y).reshape(28*8, 28*8)
         resized_labels = np.array(labels.view(8,8))
-        print(resized_images)
         return resized_images, resized_labels
 
     def train_step(self):
