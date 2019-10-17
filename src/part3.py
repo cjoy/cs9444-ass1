@@ -86,7 +86,7 @@ class NNModel:
         
         Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.). 
         """
-        self.lossfn = None
+        self.lossfn = torch.nn.KLDivLoss(reduction='batchmean')
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
 
         self.num_train_samples = len(self.trainloader)
@@ -187,10 +187,10 @@ def main():
     results = []
 
     # Can comment the below out during development
-    images, labels = NNModel(Linear(), 0.003).view_batch()
-    print(labels)
-    plt.imshow(images, cmap="Greys")
-    plt.show()
+    # images, labels = NNModel(Linear(), 0.003).view_batch()
+    # print(labels)
+    # plt.imshow(images, cmap="Greys")
+    # plt.show()
 
     for model in models:
         print(f"Training {model.__class__.__name__}...")
