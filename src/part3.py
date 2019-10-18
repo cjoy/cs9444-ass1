@@ -41,9 +41,25 @@ class Linear(nn.Module):
 class FeedForward(nn.Module):
     """
     TODO: Implement the following network structure
-    Linear (256) -> ReLU -> Linear(64) -> ReLU -> Linear(10) -> ReLU-> LogSoftmax
+    Linear (256) -> ReLU -> Linear(64) -> ReLU -> Linear(10) -> ReLU -> LogSoftmax
     """
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(in_features=784, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=64)
+        self.fc3 = nn.Linear(in_features=64, out_features=10)
 
+    def forward(self, x):
+        x = x.view(x.shape[0], -1)  # make sure inputs are flattened
+        # Layer1: Linear (256) -> ReLU ->
+        x = F.relu(self.fc1(x))
+        # Layer2: Linear(64) -> ReLU ->
+        x = F.relu(self.fc2(x))
+        # Layer3: Linear(10) -> ReLU ->
+        x = F.relu(self.fc3(x))
+        # Output: LogSoftmax
+        x = F.log_softmax(x, dim=1)
+        return x
 
 class CNN(nn.Module):
     """
@@ -57,6 +73,27 @@ class CNN(nn.Module):
     Hint: You will need to reshape outputs from the last conv layer prior to feeding them into
     the linear layers.
     """
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=10, kernel_size=5, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=10, out_channels=50, kernel_size=5, stride=1)
+        self.pool = nn.MaxPool2d(kernel_size=2)
+        self.fc1 = nn.Linear(in_features=800, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=10)
+
+    def forward(self, x):
+        # Layer1: conv1 (channels = 10, kernel size= 5, stride = 1) -> Relu -> max pool (kernel size = 2x2) ->
+        x = self.pool(F.relu(self.conv1(x)))
+        # Layer2: conv2 (channels = 50, kernel size= 5, stride = 1) -> Relu -> max pool (kernel size = 2x2) ->
+        x = self.pool(F.relu(self.conv2(x)))
+        # Layer3: Linear (256) -> Relu -> 
+        x = x.view(x.shape[0], -1)  # make sure inputs are flattened
+        x = F.relu(self.fc1(x))
+        # Layer4: Linear (10) ->
+        x = self.fc2(x)
+        # Output: LogSoftmax
+        x = F.log_softmax(x, dim=1)
+        return x
 
 class NNModel:
     def __init__(self, network, learning_rate):
@@ -86,7 +123,8 @@ class NNModel:
         
         Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.). 
         """
-        self.lossfn = torch.nn.KLDivLoss(reduction='batchmean')
+        # https://discuss.pytorch.org/t/does-nllloss-handle-log-softmax-and-softmax-in-the-same-way/8835
+        self.lossfn = torch.nn.NLLLoss(reduction='sum')
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
 
         self.num_train_samples = len(self.trainloader)
@@ -105,12 +143,6 @@ class NNModel:
            2) An int 8x8 numpy array of labels corresponding to this tiling
         """
         images, labels = next(iter(self.trainloader))
-
-        """
-      y | 
-        |
-        |______ x
-        """
         y = []
         x = []
         for i, image in enumerate(images):
@@ -187,10 +219,9 @@ def main():
     results = []
 
     # Can comment the below out during development
-    # images, labels = NNModel(Linear(), 0.003).view_batch()
-    # print(labels)
-    # plt.imshow(images, cmap="Greys")
-    # plt.show()
+    images, labels = NNModel(Linear(), 0.003).view_batch()
+    plt.imshow(images, cmap="Greys")
+    plt.show()
 
     for model in models:
         print(f"Training {model.__class__.__name__}...")
