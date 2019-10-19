@@ -45,7 +45,6 @@ class LinearModel:
             raise ValueError('Activation requires a float') 
         return (1 / (1 + np.exp(-x)))
 
-
     def forward(self, inputs):
         """
         TODO: Implement the forward pass (inference) of a the model.
@@ -53,7 +52,7 @@ class LinearModel:
         inputs is a numpy array. The bias term is the last element in self.weights.
         hint: call the activation function you have implemented above.
         """
-        inputs = np.append(inputs, 1) # account for bias
+        inputs = np.append(inputs, 1) # append 1 to input vector (to account for bias, in weights)
         return self.activation(np.dot(inputs, self.weights))
 
     @staticmethod
@@ -63,7 +62,7 @@ class LinearModel:
         hint: consider using np.log()
         """
         y, p = label, prediction
-        return -(y * np.log(p) + (1 - y) * np.log(1 - p))
+        return -((y*np.log(p)) + ((1 - y)*np.log(1 - p)))
 
     @staticmethod
     def error(prediction, label):
@@ -81,7 +80,7 @@ class LinearModel:
 
         We take advantage of the simplification shown in Lecture 2b, slide 23,
         to compute the gradient directly from the differential or difference
-        dE/ds = t - z (which is passed in as diff)
+        -dE/ds = t - z (which is passed in as diff)
 
         The resulting weight update should look essentially the same as for the
         Perceptron Learning Rule (shown in Lectures 1c, slide 11) except that
@@ -90,9 +89,9 @@ class LinearModel:
 
         Note: Numpy arrays are passed by reference and can be modified in-place
         """
-        inputs = np.append(inputs, 1) # account for bias
-        gradients = np.dot(inputs.T, diff)
-        self.weights += self.lr * gradients
+        self.weights[:-1] += self.lr * np.dot(inputs.T, diff)
+        self.weights[-1] += self.lr * diff
+
 
     def plot(self, inputs, marker):
         """
@@ -117,13 +116,13 @@ class LinearModel:
 
 def main():
     inputs, labels = pkl.load(open("../data/binary_classification_data.pkl", "rb"))
-    # inputs = np.c_[inputs, np.ones(inputs.shape[0])]
 
     epochs = 400
     model = LinearModel(num_inputs=inputs.shape[1], learning_rate=0.01)
-    cost = 0
+
     for i in range(epochs):
         num_correct = 0
+        cost = 0
         for x, y in zip(inputs, labels):
             # Get prediction
             output = model.forward(x)
